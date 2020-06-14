@@ -835,6 +835,10 @@ class ImprimirController extends Controller{
 
             $printer->setJustification(Printer::JUSTIFY_CENTER);
             $printer->setEmphasis(true);
+            $printer->text("\n");
+            $printer->text("\n");
+            $printer->text("\n");
+            $printer->text("\n");
             $printer->setTextSize(2,2);
             $printer->text('* * * MESAS * * *');
             $printer->setTextSize(1,1);
@@ -1604,8 +1608,12 @@ class ImprimirController extends Controller{
 
             $printer->setJustification(Printer::JUSTIFY_CENTER);
             $printer->setEmphasis(true);
+            $printer->text("\n");
+            $printer->text("\n");
+            $printer->text("\n");
+            $printer->text("\n");
             $printer->setTextSize(2,2);
-            $printer->text('* * * LLEVAR * * *');
+            $printer->text('*** RECOJO EN TIENDA ***');
             $printer->setTextSize(1,1);
             $printer->text("\n");
             $printer->setEmphasis();
@@ -1691,7 +1699,7 @@ class ImprimirController extends Controller{
             $printer->setJustification(Printer::JUSTIFY_CENTER);
             $printer->setEmphasis(true);
             $printer->setTextSize(2,2);
-            $printer->text('* * * LLEVAR * * *');
+            $printer->text('*** RECOJO EN TIENDA ***');
 
             $printer->selectPrintMode();
             $printer->text("\n");
@@ -1791,6 +1799,10 @@ class ImprimirController extends Controller{
 
             $printer->setJustification(Printer::JUSTIFY_CENTER);
             $printer->setEmphasis(true);
+            $printer->text("\n");
+            $printer->text("\n");
+            $printer->text("\n");
+            $printer->text("\n");
             $printer->setTextSize(2,2);
             $printer->text('* * * DELIVERY * * *');
             $printer->setTextSize(1,1);
