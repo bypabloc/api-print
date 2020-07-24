@@ -32,11 +32,8 @@ Route::post('imprimir/vale/ticket', 'ImprimirController@ticketVale');
 
 Route::post('imprimir', 'ImprimirController@imprimir');
 Route::post('imprimir2', 'ImprimirController@imprimir2');
+Route::post('imprimir3', 'ImprimirController@imprimir3');
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
-});
-
-Route::group(['middleware' => 'auth.basic'], function () {
-    Route::apiResource('books', 'Api\Books\BooksController');
 });

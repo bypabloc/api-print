@@ -102,11 +102,12 @@
                             <div class="card-body">
                                 <div class="form-group">
                                     <label for="ip_address">IP Address</label>
-                                    <input type="text" name="ip_address" value="{{ old('ip_address') }}" class="form-control ip_address @error('ip_address') is-invalid @enderror" placeholder="Enter IP... Ex 192.168.0.100" minlength="7" maxlength="15" size="15" pattern="^((\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.){3}(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$">
+                                    <input type="text" name="ip_address" value="192.168.0.201" value="{{ old('ip_address') }}" class="form-control ip_address @error('ip_address') is-invalid @enderror" placeholder="Enter IP... Ex 192.168.0.100" minlength="7" maxlength="15" size="15" pattern="^((\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.){3}(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$">
                                 </div>
                                 <div class="form-group">
                                     <label for="text">Text</label>
-                                    <textarea name="text" onfocus="this.innerHTML='{{ old('text') }}'" class="form-control text @error('text') is-invalid @enderror" placeholder="{{ old('text') }}"></textarea>
+                                    <textarea name="text" onfocus="this.innerHTML='{{ old('text') }}'" class="form-control text @error('text') is-invalid @enderror" placeholder="{{ old('text') }}">Texto de prueba                                        
+                                    </textarea>
                                 </div>
                             </div>
                             <!-- /.card-body -->

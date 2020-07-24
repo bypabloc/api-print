@@ -8,9 +8,11 @@ use Validator;
 use Illuminate\Http\Request;
 use Mike42\Escpos\Printer;
 use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
+use Mike42\Escpos\PrintConnectors\FilePrintConnector;
 use Mike42\Escpos\CapabilityProfile;
 use Mike42\Escpos\CapabilityProfiles\DefaultCapabilityProfile;
 use Softon\SweetAlert\Facades\SWAL;  
+use Mike42\Escpos\PrintBuffers\ImagePrintBuffer;
 
 class ImprimirController extends Controller{
     
@@ -433,7 +435,7 @@ class ImprimirController extends Controller{
             $printer->text("\n");
             */
             
-            $printer->cut();
+            $printer->cut(Printer::CUT_PARTIAL);
             $printer->pulse();
             $printer->close();
 
@@ -742,7 +744,7 @@ class ImprimirController extends Controller{
                 $printer->text("\n");
             }
             
-            $printer->cut();
+            $printer->cut(Printer::CUT_PARTIAL);
             $printer->pulse();
             $printer->close();
 
@@ -846,10 +848,12 @@ class ImprimirController extends Controller{
             $printer->setEmphasis();
             $printer->setJustification(Printer::JUSTIFY_LEFT);
             $printer->text("\n");
-            $printer->text('Fecha: '.$req['p_fecha']."\n");
+            $printer->setTextSize(1,2);
             $printer->text('Ambiente: '.$req['a_descripcion']."\n");
             $printer->text('Mesa: '.$req['m_descripcion']."\n");
+            $printer->setTextSize(1,1);
             $printer->text('Mozo: '.$req['p_nombre']."\n");
+            $printer->text('Fecha: '.$req['p_fecha']."\n");
             $printer->text('Pedido Nº: '.$req['numero_pedido']."\n");
             $printer->setEmphasis(true);
             $printer->text("\n");
@@ -925,7 +929,7 @@ class ImprimirController extends Controller{
             $printer->selectPrintMode();
             $printer->text("\n");
 
-            $printer->cut();
+            $printer->cut(Printer::CUT_PARTIAL);
             $printer->pulse();
             $printer->close();
 
@@ -1221,7 +1225,7 @@ class ImprimirController extends Controller{
             $printer->setJustification();
             $printer->text("\n");
             
-            $printer->cut();
+            $printer->cut(Printer::CUT_PARTIAL);
             $printer->pulse();
             $printer->close();
 
@@ -1515,7 +1519,7 @@ class ImprimirController extends Controller{
                 $printer->text("\n");
             }
             
-            $printer->cut();
+            $printer->cut(Printer::CUT_PARTIAL);
             $printer->pulse();
             $printer->close();
 
@@ -1704,7 +1708,7 @@ class ImprimirController extends Controller{
             $printer->selectPrintMode();
             $printer->text("\n");
 
-            $printer->cut();
+            $printer->cut(Printer::CUT_PARTIAL);
             $printer->pulse();
             $printer->close();
 
@@ -1888,7 +1892,7 @@ class ImprimirController extends Controller{
             $printer->selectPrintMode();
             $printer->text("\n");
 
-            $printer->cut();
+            $printer->cut(Printer::CUT_PARTIAL);
             $printer->pulse();
             $printer->close();
 
@@ -2161,7 +2165,7 @@ class ImprimirController extends Controller{
             $printer->setJustification();
             $printer->text("\n");
             
-            $printer->cut();
+            $printer->cut(Printer::CUT_PARTIAL);
             $printer->pulse();
             $printer->close();
 
@@ -2467,7 +2471,7 @@ class ImprimirController extends Controller{
             $printer->setJustification();
             $printer->text("\n");
             
-            $printer->cut();
+            $printer->cut(Printer::CUT_PARTIAL);
             $printer->pulse();
             $printer->close();
 
@@ -2770,7 +2774,7 @@ class ImprimirController extends Controller{
                 $printer->text("\n");
             }
             
-            $printer->cut();
+            $printer->cut(Printer::CUT_PARTIAL);
             $printer->pulse();
             $printer->close();
 
@@ -2833,7 +2837,7 @@ class ImprimirController extends Controller{
                 $printer->text("\n");
             }
             
-            $printer->cut();
+            $printer->cut(Printer::CUT_PARTIAL);
             $printer->pulse();
             $printer->close();
 
@@ -2917,7 +2921,7 @@ class ImprimirController extends Controller{
             }
 
             $printer->feed();
-            $printer->cut();
+            $printer->cut(Printer::CUT_PARTIAL);
             //$printer->pulse();
             $printer->close();
             return Response::json($req);
@@ -2929,63 +2933,70 @@ class ImprimirController extends Controller{
     //parametrizado2
     public function imprimir2(Request $req) {
         try{
-            $profile = CapabilityProfile::load("TM-T88IV");
+            $req = json_decode($req['json'],true);
+            //return $req;
+            $profile = CapabilityProfile::load("default");
             $connector = new NetworkPrintConnector($req['impresora']['ip']);
             $printer = new Printer($connector, $profile);
-
+            $driver = $req['impresora']['driver'];
             $lista = $req['lineas'];
             foreach ($lista as $key => $value) {
                 $printer->selectPrintMode(intval($value['selectPrintMode']));
                 $printer->setColor(intval($value['setColor']));
-                $printer->setDoubleStrike(($value['setDoubleStrike']==='true')?true:false);
-                $printer->setEmphasis(($value['setEmphasis']==='true')?true:false);
+                $printer->setDoubleStrike($value['setDoubleStrike']);
+                $printer->setEmphasis($value['setEmphasis']);
                 $printer->setFont(intval($value['setFont']));
                 $printer->setJustification(intval($value['setJustification']));
-                //$printer->setLineSpacing(intval($value['setLineSpacing']));
-                $printer->setPrintLeftMargin(intval($value['setPrintLeftMargin']));
-                //$printer->setPrintWidth(intval($value['setPrintWidth']));
-                $printer->setReverseColors(($value['setReverseColors']==='true')?true:false);
+                $printer->setLineSpacing(intval($value['setLineSpacing']));
+                if(isset($value['setPrintLeftMargin'])){
+                    $printer->setPrintLeftMargin(0);
+                }
+                if(isset($value['setPrintWidth'])){
+                    $printer->setPrintWidth(intval($value['setPrintWidth']));
+                }
+                $printer->setReverseColors($value['setReverseColors']);
                 $printer->setTextSize(intval($value['setTextSize'][0]),intval($value['setTextSize'][1]));
                 $printer->setUnderline(intval($value['setUnderline']));
                 $br = intval($value['br']);
+
+                $spacesLeft = 0;
+                $spacesRight = 0;
+                /*
+                if(isset($value['spacesLeft'])){
+                    $spacesLeft = intval($value['spacesLeft']);
+                }
+                if(isset($value['spacesRight'])){
+                    $spacesRight = intval($value['spacesRight']);
+                }
+                */
+
                 if(!isset($value['qr'])){
+                    /*
+                    $text = '';
+
+                    if(isset($value['spacesLeft'])){
+                        for($i=0;$i<$spacesLeft;$i++){
+                            $text .= ' ';
+                        }
+                    }
+
+                    $text .= $value['text'];
+
+                    if(isset($value['spacesRight'])){
+                        for($i=0;$i<$spacesRight;$i++){
+                            $text .= ' ';
+                        }
+                    }
+                    if(!empty(trim($text))){
+                        $printer->text($text);
+                    }
+                    */
+                    $printer->text($value['text']);
+
                     if($br>0){
-                        $text = $value['text'];
-                        if(isset($value['spacesLeft'])){
-                            $spacesLeft = intval($value['spacesLeft']);
-                            for($i=0;$i<$spacesLeft;$i++){
-                                $text = ' '.$text;
-                            }
-                        }
-                        if(isset($value['spacesRight'])){
-                            $spacesRight = intval($value['spacesRight']);
-                            for($i=0;$i<$spacesRight;$i++){
-                                $text = $text.' ';
-                            }
-                        }
-                        if(!empty(trim($text))){
-                            $printer->text($text);
-                        }
                         for($i=0;$i<$br;$i++){
                             $printer->setUnderline(0);
                             $printer->text(' '."\n");
-                        }
-                    }else{
-                        $text = $value['text'];
-                        if(isset($value['spacesLeft'])){
-                            $spacesLeft = intval($value['spacesLeft']);
-                            for($i=0;$i<$spacesLeft;$i++){
-                                $text = ' '.$text;
-                            }
-                        }
-                        if(isset($value['spacesRight'])){
-                            $spacesRight = intval($value['spacesRight']);
-                            for($i=0;$i<$spacesRight;$i++){
-                                $text = $text.' ';
-                            }
-                        }
-                        if(!empty(trim($text))){
-                            $printer->text($text);
                         }
                     }
                 }else{
@@ -2993,12 +3004,64 @@ class ImprimirController extends Controller{
                 }
             }
             $printer->feed();
-            $printer->cut();
+            $printer->cut(Printer::CUT_PARTIAL);
             //$printer->pulse();
             $printer->close();
             return Response::json($req);
         }catch(Exception $e){
             return Response::json($e);
+        }
+    }
+
+    //parametrizado3
+    public function imprimir3(Request $req) {
+        try {
+            $req = json_decode($req['json'],true);
+            $connector = new NetworkPrintConnector($req['impresora']['ip']);
+            $printer = new Printer($connector);
+            $lista = $req['lineas'];
+            foreach ($lista as $key => $value) {
+                $printer->selectPrintMode(intval($value['selectPrintMode']));
+                $printer->setColor(intval($value['setColor']));
+                $printer->setDoubleStrike($value['setDoubleStrike']);
+                $printer->setEmphasis($value['setEmphasis']);
+                $printer->setFont(intval($value['setFont']));
+                $printer->setJustification(intval($value['setJustification']));
+                $printer->setLineSpacing(intval($value['setLineSpacing']));
+                if(isset($value['setPrintLeftMargin'])){
+                    $printer->setPrintLeftMargin(0);
+                }
+                if(isset($value['setPrintWidth'])){
+                    $printer->setPrintWidth(intval($value['setPrintWidth']));
+                }
+                $printer->setReverseColors($value['setReverseColors']);
+                $printer->setTextSize(intval($value['setTextSize'][0]),intval($value['setTextSize'][1]));
+                $printer->setUnderline(intval($value['setUnderline']));
+                $br = intval($value['br']);
+                if(!isset($value['qr'])){
+                    $printer->text($value['text']);
+
+                    if($br>0){
+                        for($i=0;$i<$br;$i++){
+                            $printer->setUnderline(0);
+                            $printer->text(' '."\n");
+                        }
+                    }
+                }else{
+                    $printer->qrCode($value['qr'],Printer::QR_ECLEVEL_L,6,Printer::QR_MODEL_1);
+                }
+            }
+            $printer->feed();
+            $printer->cut(Printer::CUT_PARTIAL);
+            $printer->close();
+            return response()->json([
+                'message' => 'Successful printing'
+            ],200);
+            return Response::json($req);
+        }catch(Exception $e){
+            return response()->json([
+                'message' => 'Printer not found'
+            ],470);
         }
     }
 
@@ -3016,17 +3079,16 @@ class ImprimirController extends Controller{
         }
 
         try {
-            //$connector = new NetworkPrintConnector($req['ip_address']);
             $connector = new NetworkPrintConnector($req['ip_address']);
             $printer = new Printer($connector);
 
             $printer->text($req['text']);
 
             $printer->feed();
-            $printer->cut();
+            $printer->cut(Printer::CUT_PARTIAL);
             $printer->pulse();
             $printer->close();
-
+            
             return redirect('/');
         }catch(Exception $e){
             return redirect('/')->withErrors(['connection' => 'Hubo un error de conección, esto usualmente se debe a que indicó una IP incorrecta o que la conexión fisica de su impresora esta fallando.'])->withInput();
