@@ -3017,50 +3017,52 @@ class ImprimirController extends Controller{
     public function imprimir3(Request $req) {
         try {
             $req = json_decode($req['json'],true);
+            $count = ( isset($req['impresora']['cant']) ) ? $req['impresora']['cant'] : 1 ;
             $connector = new NetworkPrintConnector($req['impresora']['ip']);
             $printer = new Printer($connector);
-            $lista = $req['lineas'];
-            foreach ($lista as $key => $value) {
-                $printer->selectPrintMode(intval($value['selectPrintMode']));
-                $printer->setColor(intval($value['setColor']));
-                $printer->setDoubleStrike($value['setDoubleStrike']);
-                $printer->setEmphasis($value['setEmphasis']);
-                $printer->setFont(intval($value['setFont']));
-                $printer->setJustification(intval($value['setJustification']));
-                $printer->setLineSpacing(intval($value['setLineSpacing']));
-                if(isset($value['setPrintLeftMargin'])){
-                    $printer->setPrintLeftMargin(0);
-                }
-                if(isset($value['setPrintWidth'])){
-                    $printer->setPrintWidth(intval($value['setPrintWidth']));
-                }
-                $printer->setReverseColors($value['setReverseColors']);
-                $printer->setTextSize(intval($value['setTextSize'][0]),intval($value['setTextSize'][1]));
-                $printer->setUnderline(intval($value['setUnderline']));
-                $br = intval($value['br']);
-                if(!isset($value['qr'])){
-                    $printer->text($value['text']);
-
-                    if($br>0){
-                        for($i=0;$i<$br;$i++){
-                            $printer->setUnderline(0);
-                            $printer->text(' '."\n");
-                        }
+            for ($i=0; $i < $count; $i++) {
+                $lista = $req['lineas'];
+                foreach ($lista as $key => $value) {
+                    $printer->selectPrintMode(intval($value['selectPrintMode']));
+                    $printer->setColor(intval($value['setColor']));
+                    $printer->setDoubleStrike($value['setDoubleStrike']);
+                    $printer->setEmphasis($value['setEmphasis']);
+                    $printer->setFont(intval($value['setFont']));
+                    $printer->setJustification(intval($value['setJustification']));
+                    $printer->setLineSpacing(intval($value['setLineSpacing']));
+                    if(isset($value['setPrintLeftMargin'])){
+                        $printer->setPrintLeftMargin(0);
                     }
-                }else{
-                    $printer->qrCode($value['qr'],Printer::QR_ECLEVEL_L,6,Printer::QR_MODEL_1);
+                    if(isset($value['setPrintWidth'])){
+                        $printer->setPrintWidth(intval($value['setPrintWidth']));
+                    }
+                    $printer->setReverseColors($value['setReverseColors']);
+                    $printer->setTextSize(intval($value['setTextSize'][0]),intval($value['setTextSize'][1]));
+                    $printer->setUnderline(intval($value['setUnderline']));
+                    $br = intval($value['br']);
+                    if(!isset($value['qr'])){
+                        $printer->text($value['text']);
+                        if($br>0){
+                            for($j=0;$j<$br;$j++){
+                                $printer->setUnderline(0);
+                                $printer->text(' '."\n");
+                            }
+                        }
+                    }else{
+                        $printer->qrCode($value['qr'],Printer::QR_ECLEVEL_L,6,Printer::QR_MODEL_1);
+                    }
                 }
+                $printer->feed();
+                $printer->cut(Printer::CUT_PARTIAL);
             }
-            $printer->feed();
-            $printer->cut(Printer::CUT_PARTIAL);
             $printer->close();
             return response()->json([
-                'message' => 'Successful printing'
+                'message' => 'Impresión exitosa',
             ],200);
             return Response::json($req);
         }catch(Exception $e){
             return response()->json([
-                'message' => 'Printer not found'
+                'message' => 'Impresora no encontrada'
             ],470);
         }
     }
