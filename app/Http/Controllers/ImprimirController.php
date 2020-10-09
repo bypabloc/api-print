@@ -57,16 +57,20 @@ class ImprimirController extends Controller{
         );
     
         //Esta parte se encarga de eliminar cualquier caracter extraño
+        // 1¨2º3-4~5#6@7|8·9$10%11&12?13'14¡15¿16[17^18<code>19]20}21{22¨23´24>25< 26;27,28:
         $string = str_replace(
-            array("", "¨", "º", "-", "~",
-                "#", "@", "|", "!", "\"",
-                "·", "$", "%", "&",
-                "(", ")", "?", "'", "¡",
-                "¿", "[", "^", "<code>", "]",
-                "+", "}", "{", "¨", "´",
-                ">", "< ", ";", ",", ":",
-                "."),
-            '',
+            [
+                "", 
+                "¨", 
+                "º", 
+                "!", 
+                "\"",
+                "·", 
+                "¿", 
+                "¨", 
+                "´",
+            ],
+            ' ',
             $string
         );
     
@@ -1650,6 +1654,7 @@ class ImprimirController extends Controller{
                 }
 
                 $producto_lines = str_split(self::sanear_string($item['producto']),40);
+                //$producto_lines = str_split($item['producto'],40);
                 foreach ($producto_lines as $k => $l) {
                     $l = trim($l);
                     $producto_lines[$k] = self::addSpacesString($l,40);
