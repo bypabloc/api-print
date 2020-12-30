@@ -8,72 +8,74 @@ use Validator;
 use Illuminate\Http\Request;
 use Mike42\Escpos\Printer;
 use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
+use Mike42\Escpos\PrintConnectors\WindowsPrintConnector;
 use Mike42\Escpos\PrintConnectors\FilePrintConnector;
+use Mike42\Escpos\PrintConnectors\CupsPrintConnector;
 use Mike42\Escpos\CapabilityProfile;
 use Mike42\Escpos\CapabilityProfiles\DefaultCapabilityProfile;
-use Softon\SweetAlert\Facades\SWAL;  
+use Softon\SweetAlert\Facades\SWAL;
 use Mike42\Escpos\PrintBuffers\ImagePrintBuffer;
 
 class ImprimirController extends Controller{
-    
+
     public function sanear_string($string){
-    
+
         $string = trim($string);
-    
+
         $string = str_replace(
             array('á', 'à', 'ä', 'â', 'ª', 'Á', 'À', 'Â', 'Ä'),
             array('a', 'a', 'a', 'a', 'a', 'A', 'A', 'A', 'A'),
             $string
         );
-    
+
         $string = str_replace(
             array('é', 'è', 'ë', 'ê', 'É', 'È', 'Ê', 'Ë'),
             array('e', 'e', 'e', 'e', 'E', 'E', 'E', 'E'),
             $string
         );
-    
+
         $string = str_replace(
             array('í', 'ì', 'ï', 'î', 'Í', 'Ì', 'Ï', 'Î'),
             array('i', 'i', 'i', 'i', 'I', 'I', 'I', 'I'),
             $string
         );
-    
+
         $string = str_replace(
             array('ó', 'ò', 'ö', 'ô', 'Ó', 'Ò', 'Ö', 'Ô'),
             array('o', 'o', 'o', 'o', 'O', 'O', 'O', 'O'),
             $string
         );
-    
+
         $string = str_replace(
             array('ú', 'ù', 'ü', 'û', 'Ú', 'Ù', 'Û', 'Ü'),
             array('u', 'u', 'u', 'u', 'U', 'U', 'U', 'U'),
             $string
         );
-    
+
         $string = str_replace(
             array('ñ', 'Ñ', 'ç', 'Ç'),
             array('n', 'N', 'c', 'C',),
             $string
         );
-    
+
         //Esta parte se encarga de eliminar cualquier caracter extraño
         // 1¨2º3-4~5#6@7|8·9$10%11&12?13'14¡15¿16[17^18<code>19]20}21{22¨23´24>25< 26;27,28:
         $string = str_replace(
             [
-                "", 
-                "¨", 
-                "º", 
-                "!", 
+                "",
+                "¨",
+                "º",
+                "!",
                 "\"",
-                "·", 
-                "¿", 
-                "¨", 
+                "·",
+                "¿",
+                "¨",
                 "´",
             ],
             ' ',
             $string
         );
-    
+
         return $string;
     }
 
@@ -101,7 +103,7 @@ class ImprimirController extends Controller{
         return $string;
     }
 
-    
+
     //venta regular
     public function cuentaRapidaRegular(Request $req) {
         try{
@@ -181,19 +183,19 @@ class ImprimirController extends Controller{
                     $l = trim($l);
                     $producto_lines[$k] = self::addSpacesString($l,22);
                 }
-                
+
                 $cantidad = str_split(number_format(round(floatval($item['cantidad']),2),2),8);
                 foreach ($cantidad as $k => $l) {
                     $l = trim($l);
                     $cantidad[$k] = self::addSpacesNumber($l,8);
                 }
-            
+
                 $precio = str_split(number_format(round(floatval($item['precio']),2),2),8);
                 foreach ($precio as $k => $l) {
                     $l = trim($l);
                     $precio[$k] = self::addSpacesNumber($l,8);
                 }
-                
+
                 $total_mult = $item['cantidad'] * $item['precio'];
                 $total = $total+$total_mult;
                 $total_str = str_split(number_format(round(floatval($total_mult),2),2),10);
@@ -201,7 +203,7 @@ class ImprimirController extends Controller{
                     $l = trim($l);
                     $total_str[$k] = self::addSpacesNumber($l,10);
                 }
-            
+
                 $counter = 0;
                 $temp = [];
                 $temp[] = count($producto_lines);
@@ -209,7 +211,7 @@ class ImprimirController extends Controller{
                 $temp[] = count($precio);
                 $temp[] = count($total_str);
                 $counter = max($temp);
-            
+
                 for ($i = 0; $i < $counter; $i++) {
                     $line = '';
                     if (isset($producto_lines[$i])) {
@@ -255,32 +257,32 @@ class ImprimirController extends Controller{
                             $l = trim($l);
                             $observacion_lines[$k] = self::addSpacesString($l, 19);
                         }
-                    
+
                         $counter = 0;
                         $temp = [];
                         $temp[] = count($observacion_lines);
                         $counter = max($temp);
-                    
+
                         for ($i = 0; $i < $counter; $i++) {
                             $line = '';
                             if (isset($observacion_lines[$i])) {
                                 $line .= ($observacion_lines[$i]);
                             }
-                    
+
                             $printer->text(self::addSpacesString('',4).$line . "\n");
                         }
                     }
                 }
             }
             $printer->selectPrintMode();
-            
+
             if($req['cortesia']==0){
                 $impuesto      = round(floatval($req['impuesto']),2);
                 $base          = number_format($total/(1+($impuesto/100)),2);
                 $impuesto_porc = number_format(($total-($total/(1+($impuesto/100)))),2);
                 $total         = number_format($total,2);
             }else{
-            
+
                 $impuesto      = number_format(0,2);
                 $base          = number_format(0,2);
                 $impuesto_porc = number_format(0,2);
@@ -438,7 +440,7 @@ class ImprimirController extends Controller{
             $printer->setJustification();
             $printer->text("\n");
             */
-            
+
             $printer->cut(Printer::CUT_PARTIAL);
             $printer->pulse();
             $printer->close();
@@ -525,19 +527,19 @@ class ImprimirController extends Controller{
                     $l = trim($l);
                     $producto_lines[$k] = self::addSpacesString($l,22);
                 }
-                
+
                 $cantidad = str_split(number_format(round(floatval($item['cantidad']),2),2),8);
                 foreach ($cantidad as $k => $l) {
                     $l = trim($l);
                     $cantidad[$k] = self::addSpacesNumber($l,8);
                 }
-            
+
                 $precio = str_split(number_format(round(floatval($item['precio']),2),2),8);
                 foreach ($precio as $k => $l) {
                     $l = trim($l);
                     $precio[$k] = self::addSpacesNumber($l,8);
                 }
-                
+
                 $total_mult = $item['cantidad'] * $item['precio'];
                 $total = $total+$total_mult;
                 $total_str = str_split(number_format(round(floatval($total_mult),2),2),10);
@@ -545,7 +547,7 @@ class ImprimirController extends Controller{
                     $l = trim($l);
                     $total_str[$k] = self::addSpacesNumber($l,10);
                 }
-            
+
                 $counter = 0;
                 $temp = [];
                 $temp[] = count($producto_lines);
@@ -553,7 +555,7 @@ class ImprimirController extends Controller{
                 $temp[] = count($precio);
                 $temp[] = count($total_str);
                 $counter = max($temp);
-            
+
                 for ($i = 0; $i < $counter; $i++) {
                     $line = '';
                     if (isset($producto_lines[$i])) {
@@ -598,18 +600,18 @@ class ImprimirController extends Controller{
                             $l = trim($l);
                             $observacion_lines[$k] = self::addSpacesString($l, 19);
                         }
-                    
+
                         $counter = 0;
                         $temp = [];
                         $temp[] = count($observacion_lines);
                         $counter = max($temp);
-                    
+
                         for ($i = 0; $i < $counter; $i++) {
                             $line = '';
                             if (isset($observacion_lines[$i])) {
                                 $line .= ($observacion_lines[$i]);
                             }
-                    
+
                             $printer->text(self::addSpacesString('',4).$line . "\n");
                         }
                     }
@@ -617,7 +619,7 @@ class ImprimirController extends Controller{
                 $counter = 0;
             }
             $printer->selectPrintMode();
-            
+
             $impuesto      = round(floatval($cuenta['impuesto']),2);
             $base          = number_format($total/(1+($impuesto/100)),2);
             $impuesto_porc = number_format(($total-($total/(1+($impuesto/100)))),2);
@@ -747,7 +749,7 @@ class ImprimirController extends Controller{
                 $printer->setEmphasis(false);
                 $printer->text("\n");
             }
-            
+
             $printer->cut(Printer::CUT_PARTIAL);
             $printer->pulse();
             $printer->close();
@@ -788,7 +790,7 @@ class ImprimirController extends Controller{
                                         unset($valueDet['observacion2']);
                                         unset($valueDet['platos_estado']);
                                         unset($valueDet['precio']);
-                                        
+
                                         $stringObserv = '';
                                         if(is_array($valueDet['observacion'])){
                                             foreach ($valueDet['observacion'] as $keyObserv => $valueObserv) {
@@ -824,7 +826,7 @@ class ImprimirController extends Controller{
                 }
             }
             //return Response::json($comandas);
-            
+
         }catch(Exception $e){
             return Response::json($e);
         }
@@ -875,7 +877,7 @@ class ImprimirController extends Controller{
             foreach ($detalles as $item) {
                 //Current item ROW 1
                 $printer->text("\n");
-                
+
                 $cantidad = str_split($item['cantidad'],8);
                 foreach ($cantidad as $k => $l) {
                     $l = trim($l);
@@ -887,13 +889,13 @@ class ImprimirController extends Controller{
                     $l = trim($l);
                     $producto_lines[$k] = self::addSpacesString($l,40);
                 }
-            
+
                 $counter = 0;
                 $temp = [];
                 $temp[] = count($cantidad);
                 $temp[] = count($producto_lines);
                 $counter = max($temp);
-            
+
                 for ($i = 0; $i < $counter; $i++) {
                     $line = '';
                     if (isset($cantidad[$i])) {
@@ -912,18 +914,18 @@ class ImprimirController extends Controller{
                         $l = trim($l);
                         $observacion_lines[$k] = self::addSpacesString($l, 36);
                     }
-                
+
                     $counter = 0;
                     $temp = [];
                     $temp[] = count($observacion_lines);
                     $counter = max($temp);
-                
+
                     for ($i = 0; $i < $counter; $i++) {
                         $line = '';
                         if (isset($observacion_lines[$i])) {
                             $line .= ($observacion_lines[$i]);
                         }
-                
+
                         $printer->text(self::addSpacesString('',12).$line . "\n");
                     }
                 }
@@ -943,7 +945,7 @@ class ImprimirController extends Controller{
             return Response::json($e);
         }
     }
-    
+
     //venta rapida
     public function cuentaRapida(Request $req) {
         try{
@@ -989,19 +991,19 @@ class ImprimirController extends Controller{
                     $l = trim($l);
                     $producto_lines[$k] = self::addSpacesString($l,22);
                 }
-                
+
                 $cantidad = str_split(number_format(round(floatval($item['cantidad']),2),2),8);
                 foreach ($cantidad as $k => $l) {
                     $l = trim($l);
                     $cantidad[$k] = self::addSpacesNumber($l,8);
                 }
-            
+
                 $precio = str_split(number_format(round(floatval($item['precio']),2),2),8);
                 foreach ($precio as $k => $l) {
                     $l = trim($l);
                     $precio[$k] = self::addSpacesNumber($l,8);
                 }
-                
+
                 $total_mult = $item['cantidad'] * $item['precio'];
                 $total = $total+$total_mult;
                 $total_str = str_split(number_format(round(floatval($total_mult),2),2),10);
@@ -1009,7 +1011,7 @@ class ImprimirController extends Controller{
                     $l = trim($l);
                     $total_str[$k] = self::addSpacesNumber($l,10);
                 }
-            
+
                 $counter = 0;
                 $temp = [];
                 $temp[] = count($producto_lines);
@@ -1017,7 +1019,7 @@ class ImprimirController extends Controller{
                 $temp[] = count($precio);
                 $temp[] = count($total_str);
                 $counter = max($temp);
-            
+
                 for ($i = 0; $i < $counter; $i++) {
                     $line = '';
                     if (isset($producto_lines[$i])) {
@@ -1063,25 +1065,25 @@ class ImprimirController extends Controller{
                             $l = trim($l);
                             $observacion_lines[$k] = self::addSpacesString($l, 19);
                         }
-                    
+
                         $counter = 0;
                         $temp = [];
                         $temp[] = count($observacion_lines);
                         $counter = max($temp);
-                    
+
                         for ($i = 0; $i < $counter; $i++) {
                             $line = '';
                             if (isset($observacion_lines[$i])) {
                                 $line .= ($observacion_lines[$i]);
                             }
-                    
+
                             $printer->text(self::addSpacesString('',4).$line . "\n");
                         }
                     }
                 }
             }
             $printer->selectPrintMode();
-            
+
             if($req['cortesia']==0){
                 $impuesto      = round(floatval($req['impuesto']),2);
                 $base          = number_format($total/(1+($impuesto/100)),2);
@@ -1228,7 +1230,7 @@ class ImprimirController extends Controller{
             $printer->text('Este documento no posee ningun valor fiscal!' . "\n");
             $printer->setJustification();
             $printer->text("\n");
-            
+
             $printer->cut(Printer::CUT_PARTIAL);
             $printer->pulse();
             $printer->close();
@@ -1300,19 +1302,19 @@ class ImprimirController extends Controller{
                     $l = trim($l);
                     $producto_lines[$k] = self::addSpacesString($l,22);
                 }
-                
+
                 $cantidad = str_split(number_format(round(floatval($item['cantidad']),2),2),8);
                 foreach ($cantidad as $k => $l) {
                     $l = trim($l);
                     $cantidad[$k] = self::addSpacesNumber($l,8);
                 }
-            
+
                 $precio = str_split(number_format(round(floatval($item['precio']),2),2),8);
                 foreach ($precio as $k => $l) {
                     $l = trim($l);
                     $precio[$k] = self::addSpacesNumber($l,8);
                 }
-                
+
                 $total_mult = $item['cantidad'] * $item['precio'];
                 $total = $total+$total_mult;
                 $total_str = str_split(number_format(round(floatval($total_mult),2),2),10);
@@ -1320,7 +1322,7 @@ class ImprimirController extends Controller{
                     $l = trim($l);
                     $total_str[$k] = self::addSpacesNumber($l,10);
                 }
-            
+
                 $counter = 0;
                 $temp = [];
                 $temp[] = count($producto_lines);
@@ -1328,7 +1330,7 @@ class ImprimirController extends Controller{
                 $temp[] = count($precio);
                 $temp[] = count($total_str);
                 $counter = max($temp);
-            
+
                 for ($i = 0; $i < $counter; $i++) {
                     $line = '';
                     if (isset($producto_lines[$i])) {
@@ -1373,18 +1375,18 @@ class ImprimirController extends Controller{
                             $l = trim($l);
                             $observacion_lines[$k] = self::addSpacesString($l, 19);
                         }
-                    
+
                         $counter = 0;
                         $temp = [];
                         $temp[] = count($observacion_lines);
                         $counter = max($temp);
-                    
+
                         for ($i = 0; $i < $counter; $i++) {
                             $line = '';
                             if (isset($observacion_lines[$i])) {
                                 $line .= ($observacion_lines[$i]);
                             }
-                    
+
                             $printer->text(self::addSpacesString('',4).$line . "\n");
                         }
                     }
@@ -1392,7 +1394,7 @@ class ImprimirController extends Controller{
                 $counter = 0;
             }
             $printer->selectPrintMode();
-            
+
             $impuesto      = round(floatval($cuenta['impuesto']),2);
             $base          = number_format($total/(1+($impuesto/100)),2);
             $impuesto_porc = number_format(($total-($total/(1+($impuesto/100)))),2);
@@ -1522,7 +1524,7 @@ class ImprimirController extends Controller{
                 $printer->setEmphasis(false);
                 $printer->text("\n");
             }
-            
+
             $printer->cut(Printer::CUT_PARTIAL);
             $printer->pulse();
             $printer->close();
@@ -1563,7 +1565,7 @@ class ImprimirController extends Controller{
                                         unset($valueDet['observacion2']);
                                         unset($valueDet['platos_estado']);
                                         unset($valueDet['precio']);
-                                        
+
                                         $stringObserv = '';
                                         if(is_array($valueDet['observacion'])){
                                             foreach ($valueDet['observacion'] as $keyObserv => $valueObserv) {
@@ -1599,7 +1601,7 @@ class ImprimirController extends Controller{
                 }
             }
             //return Response::json($comandas);
-            
+
         }catch(Exception $e){
             return Response::json($e);
         }
@@ -1646,7 +1648,7 @@ class ImprimirController extends Controller{
             foreach ($detalles as $item) {
                 //Current item ROW 1
                 $printer->text("\n");
-                
+
                 $cantidad = str_split($item['cantidad'],8);
                 foreach ($cantidad as $k => $l) {
                     $l = trim($l);
@@ -1659,13 +1661,13 @@ class ImprimirController extends Controller{
                     $l = trim($l);
                     $producto_lines[$k] = self::addSpacesString($l,40);
                 }
-            
+
                 $counter = 0;
                 $temp = [];
                 $temp[] = count($cantidad);
                 $temp[] = count($producto_lines);
                 $counter = max($temp);
-            
+
                 for ($i = 0; $i < $counter; $i++) {
                     $line = '';
                     if (isset($cantidad[$i])) {
@@ -1684,18 +1686,18 @@ class ImprimirController extends Controller{
                         $l = trim($l);
                         $observacion_lines[$k] = self::addSpacesString($l, 36);
                     }
-                
+
                     $counter = 0;
                     $temp = [];
                     $temp[] = count($observacion_lines);
                     $counter = max($temp);
-                
+
                     for ($i = 0; $i < $counter; $i++) {
                         $line = '';
                         if (isset($observacion_lines[$i])) {
                             $line .= ($observacion_lines[$i]);
                         }
-                
+
                         $printer->text(self::addSpacesString('',12).$line . "\n");
                     }
                 }
@@ -1755,7 +1757,7 @@ class ImprimirController extends Controller{
                                         unset($valueDet['observacion2']);
                                         unset($valueDet['platos_estado']);
                                         unset($valueDet['precio']);
-                                        
+
                                         $stringObserv = '';
                                         if(is_array($valueDet['observacion'])){
                                             foreach ($valueDet['observacion'] as $keyObserv => $valueObserv) {
@@ -1791,7 +1793,7 @@ class ImprimirController extends Controller{
                     self::imprimirComandasDelivery($req,$value['items'],$value['ip']);
                 }
             }
-            
+
         }catch(Exception $e){
             return Response::json($e);
         }
@@ -1839,7 +1841,7 @@ class ImprimirController extends Controller{
             foreach ($detalles as $item) {
                 //Current item ROW 1
                 $printer->text("\n");
-                
+
                 $cantidad = str_split($item['cantidad'],8);
                 foreach ($cantidad as $k => $l) {
                     $l = trim($l);
@@ -1851,13 +1853,13 @@ class ImprimirController extends Controller{
                     $l = trim($l);
                     $producto_lines[$k] = self::addSpacesString($l,40);
                 }
-            
+
                 $counter = 0;
                 $temp = [];
                 $temp[] = count($cantidad);
                 $temp[] = count($producto_lines);
                 $counter = max($temp);
-            
+
                 for ($i = 0; $i < $counter; $i++) {
                     $line = '';
                     if (isset($cantidad[$i])) {
@@ -1876,18 +1878,18 @@ class ImprimirController extends Controller{
                         $l = trim($l);
                         $observacion_lines[$k] = self::addSpacesString($l, 36);
                     }
-                
+
                     $counter = 0;
                     $temp = [];
                     $temp[] = count($observacion_lines);
                     $counter = max($temp);
-                
+
                     for ($i = 0; $i < $counter; $i++) {
                         $line = '';
                         if (isset($observacion_lines[$i])) {
                             $line .= ($observacion_lines[$i]);
                         }
-                
+
                         $printer->text(self::addSpacesString('',12).$line . "\n");
                     }
                 }
@@ -1969,13 +1971,13 @@ class ImprimirController extends Controller{
                     $l = trim($l);
                     $cantidad[$k] = self::addSpacesNumber($l,8);
                 }
-            
+
                 $precio = str_split(number_format(round(floatval($item['precio']),2),2),8);
                 foreach ($precio as $k => $l) {
                     $l = trim($l);
                     $precio[$k] = self::addSpacesNumber($l,8);
                 }
-                
+
                 $total_mult = $item['cantidad'] * $item['precio'];
                 $total = $total+$total_mult;
                 $total_str = str_split(number_format(round(floatval($total_mult),2),2),10);
@@ -1983,7 +1985,7 @@ class ImprimirController extends Controller{
                     $l = trim($l);
                     $total_str[$k] = self::addSpacesNumber($l,10);
                 }
-            
+
                 $counter = 0;
                 $temp = [];
                 $temp[] = count($producto_lines);
@@ -1991,7 +1993,7 @@ class ImprimirController extends Controller{
                 $temp[] = count($precio);
                 $temp[] = count($total_str);
                 $counter = max($temp);
-            
+
                 for ($i = 0; $i < $counter; $i++) {
                     $line = '';
                     if (isset($producto_lines[$i])) {
@@ -2037,25 +2039,25 @@ class ImprimirController extends Controller{
                             $l = trim($l);
                             $observacion_lines[$k] = self::addSpacesString($l, 19);
                         }
-                    
+
                         $counter = 0;
                         $temp = [];
                         $temp[] = count($observacion_lines);
                         $counter = max($temp);
-                    
+
                         for ($i = 0; $i < $counter; $i++) {
                             $line = '';
                             if (isset($observacion_lines[$i])) {
                                 $line .= ($observacion_lines[$i]);
                             }
-                    
+
                             $printer->text(self::addSpacesString('',4).$line . "\n");
                         }
                     }
                 }
             }
             $printer->selectPrintMode();
-            
+
             $impuesto      = round(floatval($req['impuesto']),2);
             $base          = number_format($total/(1+($impuesto/100)),2);
             $impuesto_porc = number_format(($total-($total/(1+($impuesto/100)))),2);
@@ -2063,7 +2065,7 @@ class ImprimirController extends Controller{
 
             $printer->text(self::addSpacesNumber('Base:', 38) . self::addSpacesNumber($base, 10) . "\n");
             $printer->text(self::addSpacesNumber('Impuesto '.$impuesto.'%:', 38) . self::addSpacesNumber($impuesto_porc, 10) . "\n");
-            
+
             $descuento = $req['descuento'];
             if($descuento){
                 $printer->setTextSize(1,1);
@@ -2169,7 +2171,7 @@ class ImprimirController extends Controller{
             $printer->text('Este documento no posee ningun valor fiscal!' . "\n");
             $printer->setJustification();
             $printer->text("\n");
-            
+
             $printer->cut(Printer::CUT_PARTIAL);
             $printer->pulse();
             $printer->close();
@@ -2235,19 +2237,19 @@ class ImprimirController extends Controller{
                     $l = trim($l);
                     $producto_lines[$k] = self::addSpacesString($l,22);
                 }
-                
+
                 $cantidad = str_split(number_format(round(floatval($item['cantidad']),2),2),8);
                 foreach ($cantidad as $k => $l) {
                     $l = trim($l);
                     $cantidad[$k] = self::addSpacesNumber($l,8);
                 }
-            
+
                 $precio = str_split(number_format(round(floatval($item['precio']),2),2),8);
                 foreach ($precio as $k => $l) {
                     $l = trim($l);
                     $precio[$k] = self::addSpacesNumber($l,8);
                 }
-                
+
                 $total_mult = $item['cantidad'] * $item['precio'];
                 $total = $total+$total_mult;
                 $total_str = str_split(number_format(round(floatval($total_mult),2),2),10);
@@ -2255,7 +2257,7 @@ class ImprimirController extends Controller{
                     $l = trim($l);
                     $total_str[$k] = self::addSpacesNumber($l,10);
                 }
-            
+
                 $counter = 0;
                 $temp = [];
                 $temp[] = count($producto_lines);
@@ -2263,7 +2265,7 @@ class ImprimirController extends Controller{
                 $temp[] = count($precio);
                 $temp[] = count($total_str);
                 $counter = max($temp);
-            
+
                 for ($i = 0; $i < $counter; $i++) {
                     $line = '';
                     if (isset($producto_lines[$i])) {
@@ -2309,32 +2311,32 @@ class ImprimirController extends Controller{
                             $l = trim($l);
                             $observacion_lines[$k] = self::addSpacesString($l, 19);
                         }
-                    
+
                         $counter = 0;
                         $temp = [];
                         $temp[] = count($observacion_lines);
                         $counter = max($temp);
-                    
+
                         for ($i = 0; $i < $counter; $i++) {
                             $line = '';
                             if (isset($observacion_lines[$i])) {
                                 $line .= ($observacion_lines[$i]);
                             }
-                    
+
                             $printer->text(self::addSpacesString('',4).$line . "\n");
                         }
                     }
                 }
             }
             $printer->selectPrintMode();
-            
+
             if($req['cortesia']==0){
                 $impuesto      = round(floatval($req['impuesto']),2);
                 $base          = number_format($total/(1+($impuesto/100)),2);
                 $impuesto_porc = number_format(($total-($total/(1+($impuesto/100)))),2);
                 $total         = number_format($total,2);
             }else{
-            
+
                 $impuesto      = number_format(0,2);
                 $base          = number_format(0,2);
                 $impuesto_porc = number_format(0,2);
@@ -2475,7 +2477,7 @@ class ImprimirController extends Controller{
             $printer->text('Este documento no posee ningun valor fiscal!' . "\n");
             $printer->setJustification();
             $printer->text("\n");
-            
+
             $printer->cut(Printer::CUT_PARTIAL);
             $printer->pulse();
             $printer->close();
@@ -2556,19 +2558,19 @@ class ImprimirController extends Controller{
                     $l = trim($l);
                     $producto_lines[$k] = self::addSpacesString($l,22);
                 }
-                
+
                 $cantidad = str_split(number_format(round(floatval($item['cantidad']),2),2),8);
                 foreach ($cantidad as $k => $l) {
                     $l = trim($l);
                     $cantidad[$k] = self::addSpacesNumber($l,8);
                 }
-            
+
                 $precio = str_split(number_format(round(floatval($item['precio']),2),2),8);
                 foreach ($precio as $k => $l) {
                     $l = trim($l);
                     $precio[$k] = self::addSpacesNumber($l,8);
                 }
-                
+
                 $total_mult = $item['cantidad'] * $item['precio'];
                 $total = $total+$total_mult;
                 $total_str = str_split(number_format(round(floatval($total_mult),2),2),10);
@@ -2576,7 +2578,7 @@ class ImprimirController extends Controller{
                     $l = trim($l);
                     $total_str[$k] = self::addSpacesNumber($l,10);
                 }
-            
+
                 $counter = 0;
                 $temp = [];
                 $temp[] = count($producto_lines);
@@ -2584,7 +2586,7 @@ class ImprimirController extends Controller{
                 $temp[] = count($precio);
                 $temp[] = count($total_str);
                 $counter = max($temp);
-            
+
                 for ($i = 0; $i < $counter; $i++) {
                     $line = '';
                     if (isset($producto_lines[$i])) {
@@ -2629,18 +2631,18 @@ class ImprimirController extends Controller{
                             $l = trim($l);
                             $observacion_lines[$k] = self::addSpacesString($l, 19);
                         }
-                    
+
                         $counter = 0;
                         $temp = [];
                         $temp[] = count($observacion_lines);
                         $counter = max($temp);
-                    
+
                         for ($i = 0; $i < $counter; $i++) {
                             $line = '';
                             if (isset($observacion_lines[$i])) {
                                 $line .= ($observacion_lines[$i]);
                             }
-                    
+
                             $printer->text(self::addSpacesString('',4).$line . "\n");
                         }
                     }
@@ -2648,7 +2650,7 @@ class ImprimirController extends Controller{
                 $counter = 0;
             }
             $printer->selectPrintMode();
-            
+
             $impuesto      = round(floatval($cuenta['impuesto']),2);
             $base          = number_format($total/(1+($impuesto/100)),2);
             $impuesto_porc = number_format(($total-($total/(1+($impuesto/100)))),2);
@@ -2778,7 +2780,7 @@ class ImprimirController extends Controller{
                 $printer->setEmphasis(false);
                 $printer->text("\n");
             }
-            
+
             $printer->cut(Printer::CUT_PARTIAL);
             $printer->pulse();
             $printer->close();
@@ -2841,7 +2843,7 @@ class ImprimirController extends Controller{
                 $printer->setEmphasis(false);
                 $printer->text("\n");
             }
-            
+
             $printer->cut(Printer::CUT_PARTIAL);
             $printer->pulse();
             $printer->close();
@@ -3078,7 +3080,7 @@ class ImprimirController extends Controller{
             'ip_address' => ['required','min:7','max:15','ip'],
             //'text' => ['required','max:255'],
         ]);
-    
+
         if ($validator->fails()) {
             return redirect('/')
                 ->withInput()
@@ -3086,7 +3088,15 @@ class ImprimirController extends Controller{
         }
 
         try {
-            $connector = new NetworkPrintConnector($req['ip_address']);
+            // $connector = new WindowsPrintConnector("usb://Unknown/Printer");
+
+            // $connector = new FilePrintConnector("/dev/usb/lp5");
+
+            // $connector = new WindowsPrintConnector("Epson-9-Pin");
+
+            // $connector = new CupsPrintConnector("usb://Unknown/Printer");
+
+            // $connector = new NetworkPrintConnector($req['ip_address']);
             $printer = new Printer($connector);
 
             $printer->text($req['text']);
@@ -3095,10 +3105,10 @@ class ImprimirController extends Controller{
             $printer->cut(Printer::CUT_PARTIAL);
             $printer->pulse();
             $printer->close();
-            
+
             return redirect('/');
         }catch(Exception $e){
-            return redirect('/')->withErrors(['connection' => 'Hubo un error de conección, esto usualmente se debe a que indicó una IP incorrecta o que la conexión fisica de su impresora esta fallando.'])->withInput();
+            return redirect('/')->withErrors(['connection' => 'Hubo un error de conexión, esto usualmente se debe a que indicó una IP incorrecta o que la conexión fisica de su impresora esta fallando.'])->withInput();
         }
     }
 
