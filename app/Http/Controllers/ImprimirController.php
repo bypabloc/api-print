@@ -3025,18 +3025,42 @@ class ImprimirController extends Controller{
         try {
             $req = json_decode($req['json'],true);
             $count = ( isset($req['impresora']['cant']) ) ? $req['impresora']['cant'] : 1 ;
-            $connector = new NetworkPrintConnector($req['impresora']['ip']);
+            $way = ( isset($req['impresora']['way']) ) ? $req['impresora']['way'] : 1 ;
+            $connector = null;
+            if($way==1){
+                $connector = new NetworkPrintConnector($req['impresora']['ip']);
+            }else if ($way==2){
+                $connector = new CupsPrintConnector($req['impresora']['ip']);
+            }else if ($way==3){
+                $connector = new WindowsPrintConnector($req['impresora']['ip']);
+            }else{
+                return response()->json([
+                    'message' => 'No indico el tipo de via conexión'
+                ],470);
+            }
+
             $printer = new Printer($connector);
             for ($i=0; $i < $count; $i++) {
                 $lista = $req['lineas'];
                 foreach ($lista as $key => $value) {
+                    /*
+                    if((intval($value['selectPrintMode'])==0)||(intval($value['selectPrintMode'])==1)){
+                        $printer->selectPrintMode(intval($value['selectPrintMode']));
+                    }else if(intval($value['selectPrintMode'])==2){
+                        $printer->selectPrintMode(Printer::MODE_UNDERLINE);
+                    }else{
+                        $printer->selectPrintMode(0);
+                    }
+                    */
+
                     $printer->selectPrintMode(intval($value['selectPrintMode']));
+
                     $printer->setColor(intval($value['setColor']));
                     $printer->setDoubleStrike($value['setDoubleStrike']);
                     $printer->setEmphasis($value['setEmphasis']);
                     $printer->setFont(intval($value['setFont']));
                     $printer->setJustification(intval($value['setJustification']));
-                    $printer->setLineSpacing(intval($value['setLineSpacing']));
+                    // $printer->setLineSpacing(intval($value['setLineSpacing']));
                     if(isset($value['setPrintLeftMargin'])){
                         $printer->setPrintLeftMargin(0);
                     }
@@ -3046,6 +3070,7 @@ class ImprimirController extends Controller{
                     $printer->setReverseColors($value['setReverseColors']);
                     $printer->setTextSize(intval($value['setTextSize'][0]),intval($value['setTextSize'][1]));
                     $printer->setUnderline(intval($value['setUnderline']));
+                    // $printer->setUnderline(Printer::UNDERLINE_SINGLE);
                     $br = intval($value['br']);
                     if(!isset($value['qr'])){
                         $printer->text($value['text']);
@@ -3062,15 +3087,34 @@ class ImprimirController extends Controller{
                 $printer->feed();
                 $printer->cut(Printer::CUT_PARTIAL);
             }
+            $printer->pulse();
             $printer->close();
+
+
+            /*
+            $printer->cut(Printer::CUT_PARTIAL);
+            $printer->pulse();
+            $printer->close();
+            */
+
             return response()->json([
                 'message' => 'Impresión exitosa',
             ],200);
             return Response::json($req);
         }catch(Exception $e){
-            return response()->json([
-                'message' => 'Impresora no encontrada'
-            ],470);
+            return response()->json(
+                [
+                    'message' => 'Impresora no encontrada',
+                    'e' => $e,
+                ],
+            470);
+        }catch(\BadMethodCallException $e){
+            return response()->json(
+                [
+                    'message' => 'BadMethodCallException',
+                    'e' => $e,
+                ],
+            470);
         }
     }
 
@@ -3088,13 +3132,15 @@ class ImprimirController extends Controller{
         }
 
         try {
-            // $connector = new WindowsPrintConnector("usb://Unknown/Printer");
 
-            // $connector = new FilePrintConnector("/dev/usb/lp5");
+            // cups para linux -> $connector = new CupsPrintConnector("Epson-9-Pin");
+            // windows para windows -> $connector = new WindowsPrintConnector("impresora");
 
-            // $connector = new WindowsPrintConnector("Epson-9-Pin");
+            // network para todos -> $connector = new NetworkPrintConnector($req['ip_address']);
 
-            // $connector = new CupsPrintConnector("usb://Unknown/Printer");
+            // $connector = new CupsPrintConnector("Epson-9-Pin");
+
+            $connector = new CupsPrintConnector("Epson-9-Pin");
 
             // $connector = new NetworkPrintConnector($req['ip_address']);
             $printer = new Printer($connector);
